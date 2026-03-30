@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dragon Quiz Runner 🌸</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg1: #27998a;
+  --bg2: #a10d88;
+  --bg3: #4caf9f;
+  --panel: rgba(17, 17, 16, 0.45);
+  --panel-border: rgba(107, 16, 16, 0.22);
+  --text: #cfcc10;
+  --accent: #edf5e8;
+  --shadow: rgba(3, 10, 60, 0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 50%,var(--bg3) 100%);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;overflow-x:hidden;
+  color:var(--text);
+}
+body::before{
+  content:'✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧';
+  position:fixed;top:0;left:0;right:0;font-size:1.4rem;letter-spacing:3vw;
+  color:rgba(129, 212, 250, 0.12);pointer-events:none;padding:1rem;
+  animation:sparkle 18s linear infinite;z-index:0;
+}
+@keyframes sparkle{from{transform:translateX(0)}to{transform:translateX(-80px)}}
+
+.app{position:relative;z-index:1;width:min(920px,96vw);padding:1rem;display:flex;flex-direction:column;gap:.8rem;}
+
+/* LOBBY */
+#lobby{background:var(--panel);border:1px solid var(--panel-border);border-radius:20px;
+  padding:2rem;text-align:center;box-shadow:0 16px 32px var(--shadow);backdrop-filter:blur(15px);}
+#lobby h1{font-family:'Fredoka One',cursive;font-size:2.4rem;color:#81d4fa;
+  text-shadow:0 0 20px rgba(129,212,250,0.8),0 0 40px rgba(126,87,194,0.6);margin-bottom:.3rem;}
+#lobby>p{color:var(--accent);font-weight:600;margin-bottom:1.4rem;}
+.player-setup{display:flex;flex-direction:column;gap:.6rem;max-width:340px;margin:0 auto 1.2rem;}
+.player-setup label{display:flex;align-items:center;gap:.7rem;background:rgba(33,150,243,.16);
+  border:1.2px solid rgba(129,212,250,.65);border-radius:12px;padding:.55rem .8rem;font-weight:700;color:#e1f5fe;}
+.player-setup label span{font-size:1.4rem;}
+.player-setup input{flex:1;border:none;background:transparent;font-family:'Nunito',sans-serif;
+  font-size:.95rem;font-weight:700;color:#e1f5fe;outline:none;}
+.player-setup input::placeholder{color:#b3e5fc;font-weight:600;}
+.lobby-info{background:rgba(10,25,70,.25);border:1px solid var(--panel-border);border-radius:12px;padding:.8rem 1rem;
+  font-size:.9rem;color:#b3e5fc;font-weight:600;margin-bottom:1.2rem;line-height:1.7;}
+.btn-primary{font-family:'Fredoka One',cursive;background:linear-gradient(145deg,#0d47a1,#1e88e5);
+  color:#e3f2fd;border:none;border-radius:14px;padding:.8rem 2.4rem;font-size:1.3rem;cursor:pointer;
+  letter-spacing:1px;box-shadow:0 8px 20px rgba(0,0,0,.35);transition:transform .18s,box-shadow .18s;}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.45);}
+
+/* GAME WRAPPER */
+#game-wrapper{display:none;flex-direction:column;gap:.8rem;}
+
+/* TOP BAR */
+.top-bar{display:flex;justify-content:space-between;align-items:center;
+  background:rgba(8, 24, 70, 0.58);border:1px solid var(--panel-border);border-radius:14px;
+  padding:.45rem 1rem;backdrop-filter:blur(15px);box-shadow:0 4px 20px var(--shadow);}
+.top-bar h1{font-family:'Fredoka One',cursive;font-size:1.5rem;color:#e1f5fe;
+  text-shadow:0 0 8px rgba(129,212,250,.7);}
+#status-bar{font-size:.88rem;font-weight:700;color:#b3e5fc;}
+
+/* LEADERBOARD */
+.leaderboard{display:flex;gap:.5rem;background:rgba(8, 20, 70, 0.38);
+  border:1px solid var(--panel-border);border-radius:14px;padding:.55rem 1rem;
+  backdrop-filter:blur(15px);box-shadow:0 4px 18px var(--shadow);}
+.player-card{flex:1;text-align:center;padding:.8rem .6rem;border-radius:12px;transition:transform .3s,background .3s;
+  background:rgba(24, 39, 110, .43);border:1px solid rgba(129,212,250,.5);}
+.player-card.me{background:linear-gradient(145deg,rgba(33,150,243,.45),rgba(63,81,181,.4));border:1px solid rgba(144,202,249,.9);}
+.p-name{font-family:'Fredoka One',cursive;font-size:1rem;color:#81d4fa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.p-score{font-family:'Fredoka One',cursive;font-size:1.6rem;color:#e1f5fe;}
+.p-prog{height:8px;border-radius:4px;background:rgba(129,212,250,.2);margin-top:4px;overflow:hidden;}
+.p-prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#42a5f5,#1e88e5);transition:width .4s;}
+@keyframes winner-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06);box-shadow:0 0 24px rgba(66,165,245,.7);}}
+.player-card.winner-flash{animation:winner-pulse .4s ease-in-out 4;}
+
+/* GAME AREA */
+.game-area{position:relative;width:100%;height:230px;border-radius:20px;
+  border:1px solid rgba(129,212,250,.5);box-shadow:0 8px 36px var(--shadow);overflow:hidden;
+  background:linear-gradient(180deg,rgba(3, 10, 60, .94) 0%,rgba(7, 22, 70, .88) 52%,rgba(21, 101, 192, .86) 100%);}
+.cloud{position:absolute;border-radius:50%;background:rgba(129,212,250,.35);filter:blur(2px);pointer-events:none;}
+.cloud-1{width:110px;height:28px;top:18px;animation:cloud-move 13s linear infinite;}
+.cloud-2{width:70px;height:18px;top:40px;animation:cloud-move 19s linear infinite 4s;}
+.cloud-3{width:55px;height:16px;top:12px;animation:cloud-move 16s linear infinite 8s;}
+@keyframes cloud-move{from{left:110%}to{left:-20%}}
+.ground{position:absolute;left:0;right:0;bottom:0;height:40px;z-index:5;
+  background:repeating-linear-gradient(90deg,#0d1b3d 0px,#1a2e5f 16px,#0d1b3d 16px,#1a2e5f 32px);
+  background-size:64px 40px;}
+.ground::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,rgba(129,212,250,.5) 30%,rgba(126,87,194,.6) 80%,transparent);opacity:.8;}
+
+/* DRAGON */
+#dino{position:absolute;bottom:40px;left:80px;width:68px;height:62px;z-index:20;}
+#dino svg,#obstacle svg{width:100%;height:100%;overflow:visible;}
+#obstacle{position:absolute;bottom:40px;width:42px;height:68px;z-index:10;}
+
+/* ANIMATIONS */
+@keyframes wing-beat{0%,100%{transform:rotate(-12deg) scaleY(1);}50%{transform:rotate(22deg) scaleY(.82);}}
+@keyframes wing-beat-fast{0%,100%{transform:rotate(-20deg) scaleY(.9);}50%{transform:rotate(30deg) scaleY(1.15);}}
+@keyframes crash-shake{0%{transform:rotate(0);}25%{transform:rotate(-18deg) translateX(-4px);}
+  50%{transform:rotate(18deg) translateX(4px);}75%{transform:rotate(-10deg);}100%{transform:rotate(8deg);}}
+#dino.running .dragon-wing{animation:wing-beat .42s ease-in-out infinite;transform-origin:50px 20px;}
+#dino.jumping .dragon-wing{animation:wing-beat-fast .22s ease-in-out infinite;transform-origin:50px 20px;}
+#dino.crash{animation:crash-shake .4s ease-out forwards;}
+
+/* OVERLAYS */
+.game-over{position:absolute;inset:0;background:rgba(255,220,240,.88);
+  display:grid;place-items:center;z-index:50;backdrop-filter:blur(4px);}
+.game-over.hidden{display:none;}
+.game-over-card{background:rgba(8,18,58,.7);border:1px solid var(--panel-border);border-radius:18px;
+  padding:1.4rem 2rem;text-align:center;box-shadow:0 8px 32px var(--shadow);}
+.game-over-card h2{font-family:'Fredoka One',cursive;font-size:2rem;color:#e1f5fe;margin-bottom:.3rem;
+  text-shadow:0 0 10px rgba(129,212,250,.7);}
+.game-over-card p{font-size:1rem;margin-bottom:1rem;color:#b3e5fc;font-weight:600;}
+
+#winner-screen{display:none;position:fixed;inset:0;background:rgba(1, 7, 35, .82);
+  z-index:100;align-items:center;justify-content:center;flex-direction:column;backdrop-filter:blur(10px);}
+#winner-screen.show{display:flex;}
+.winner-box{background:rgba(12,32,84,.86);border:3px solid #81d4fa;border-radius:24px;padding:2.5rem 3rem;
+  text-align:center;box-shadow:0 12px 48px rgba(3,10,60,.8);
+  animation:winner-pop .5s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes winner-pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.winner-box h2{font-family:'Fredoka One',cursive;font-size:3rem;color:#e1f5fe;text-shadow:0 0 16px rgba(129,212,250,.8);}
+.winner-box .crown{font-size:4rem;line-height:1;}
+.winner-box .winner-name{font-family:'Fredoka One',cursive;font-size:2rem;color:#81d4fa;margin:.4rem 0;}
+.winner-box .sub{color:#b3e5fc;font-weight:600;margin-bottom:1.2rem;}
+.confetti-row{font-size:2rem;letter-spacing:.4rem;margin-bottom:1.2rem;}
+
+/* QUIZ */
+.quiz-card{background:rgba(64, 31, 209, 0.72);border:1px solid var(--panel-border);border-radius:14px;
+  padding:1rem 1.2rem;backdrop-filter:blur(15px);box-shadow:0 6px 22px var(--shadow);}
+.quiz-card.hidden{display:none;}
+.quiz-card h2{font-size:1.05rem;font-weight:800;color:#e1f5fe;margin-bottom:.7rem;line-height:1.4;
+  text-shadow:0 0 10px rgba(129,212,250,.65);}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.choice-btn{border:1px solid rgba(129,212,250,.7);border-radius:10px;background:linear-gradient(135deg,rgba(33,150,243,.3),rgba(21,101,192,.35));
+  color:#e1f5fe;padding:.65rem .75rem;cursor:pointer;font-family:'Nunito',sans-serif;
+  font-size:.9rem;font-weight:700;transition:transform .15s,box-shadow .15s,text-shadow .15s;text-align:left;}
+.choice-btn:hover:not(:disabled){background:linear-gradient(135deg,rgba(33,150,243,.65),rgba(21,101,192,.75));box-shadow:0 3px 12px rgba(0,0,0,.35);transform:translateY(-2px);}
+.choice-btn:disabled{cursor:not-allowed;opacity:.55;}
+
+.btn-sm{font-family:'Fredoka One',cursive;background:linear-gradient(145deg,#0d47a1,#1976d2);
+  color:#e3f2fd;border:none;border-radius:12px;padding:.6rem 1.8rem;font-size:1.1rem;
+  cursor:pointer;box-shadow:0 5px 14px rgba(0,0,0,.35);transition:transform .15s;}
+.btn-sm:hover{transform:translateY(-2px);}
+.hint{text-align:center;font-size:.85rem;color:#b3e5fc;margin-top:-.2rem;}
+</style>
+</head>
+<body>
+<main class="app">
+
+<!-- ═══ LOBBY ═══ -->
+<div id="lobby">
+  <h1>🐉 Dragon Quiz Runner 🌸</h1>
+  <p>სასიამოვნო თამაშს გისურვებ 
+    PS. შენი ლანა</p>
+  <div class="player-setup">
+    <label><span>🐲</span><input id="n1" placeholder="აქ ჩაწერე შენი სახელი" maxlength="16"/></label>
+  </div>
+  <div class="lobby-info">
+    📋 <strong>Single Player Mode:</strong><br>
+    1. შეიყვანეთ თქვენი სახელი ➜ დააჭირეთ <em>დაწყება</em><br>
+    2. ყოველ არასწორ პასუხზე მოგიწევს თამაშის თავიდან დაწყება 📱<br>
+    🏆 50 ქულას მიაღწევს ყველა გამარჯვებული!
+  </div>
+  <button class="btn-primary" onclick="startLobby()">🌸 თამაშის დაწყება</button>
+</div>
+
+<!-- ═══ GAME ═══ -->
+<div id="game-wrapper">
+  <div class="top-bar">
+    <h1>🐉 Dragon Quiz 🌸</h1>
+    <div id="status-bar">გაიქეცი!</div>
+  </div>
+
+  <div class="leaderboard">
+    <div class="player-card me" id="pc0"><div class="p-name" id="pn0">Player</div><div class="p-score" id="ps0">0</div><div class="p-prog"><div class="p-prog-fill" id="pp0" style="width:0%"></div></div></div>
+  </div>
+
+  <section class="game-area">
+    <div class="cloud cloud-1"></div><div class="cloud cloud-2"></div><div class="cloud cloud-3"></div>
+    <div class="ground" id="ground"></div>
+
+    <!-- DRAGON SVG (pink/magenta) -->
+    <div id="dino">
+      <svg viewBox="0 0 70 64" xmlns="http://www.w3.org/2000/svg">
+        <g class="dragon-wing" style="transform-origin:38px 22px">
+          <ellipse cx="22" cy="18" rx="20" ry="10" fill="#f06292" opacity=".85"/>
+          <ellipse cx="14" cy="16" rx="10" ry="6"  fill="#f48fb1" opacity=".7"/>
+          <line x1="38" y1="22" x2="10" y2="10" stroke="#e91e8c" stroke-width="1.5"/>
+          <line x1="38" y1="22" x2="6"  y2="20" stroke="#e91e8c" stroke-width="1"/>
+          <line x1="38" y1="22" x2="14" y2="28" stroke="#e91e8c" stroke-width="1"/>
+        </g>
+        <path d="M20 48 Q8 54 5 60 Q10 55 16 52" fill="#e91e8c" stroke="#c2185b" stroke-width="1"/>
+        <polygon points="5,60 2,56 8,57" fill="#9c27b0"/>
+        <ellipse cx="40" cy="42" rx="20" ry="14" fill="#e91e8c"/>
+        <ellipse cx="42" cy="46" rx="12" ry="8"  fill="#fce4f3" opacity=".6"/>
+        <ellipse cx="34" cy="36" rx="4" ry="2.5" fill="#c2185b" opacity=".5"/>
+        <ellipse cx="44" cy="34" rx="4" ry="2.5" fill="#c2185b" opacity=".5"/>
+        <ellipse cx="53" cy="30" rx="9" ry="13" fill="#e91e8c" transform="rotate(-15,53,30)"/>
+        <ellipse cx="60" cy="18" rx="11" ry="9"  fill="#e91e8c"/>
+        <ellipse cx="67" cy="22" rx="6"  ry="5"  fill="#f48fb1"/>
+        <circle  cx="70" cy="21" r="1.2"          fill="#c2185b"/>
+        <circle  cx="63" cy="14" r="3.5"           fill="#fff9c4"/>
+        <circle  cx="64" cy="14" r="2"             fill="#1c1917"/>
+        <circle  cx="64.8" cy="13.2" r=".7"        fill="#fff"/>
+        <path d="M60 11 Q64 9 67 11" stroke="#c2185b" stroke-width="1.5" fill="none"/>
+        <path d="M58 10 Q57 4 60 2"  stroke="#9c27b0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M63 9  Q63 3 66 1"  stroke="#9c27b0" stroke-width="2"   fill="none" stroke-linecap="round"/>
+        <ellipse cx="71" cy="23" rx="2" ry="1.5" fill="#f97316" opacity=".7"/>
+        <rect x="33" y="53" width="7" height="10" rx="3" fill="#c2185b"/>
+        <rect x="44" y="53" width="7" height="10" rx="3" fill="#c2185b"/>
+        <path d="M33 63 l-3 3 m3-3 l0 3 m0-3 l3 3" stroke="#9c27b0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M44 63 l-3 3 m3-3 l0 3 m0-3 l3 3" stroke="#9c27b0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- CACTUS SVG (pink tones) -->
+    <div id="obstacle">
+      <svg viewBox="0 0 44 72" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#c2185b"/>
+            <stop offset="50%"  stop-color="#e91e8c"/>
+            <stop offset="100%" stop-color="#c2185b"/>
+          </linearGradient>
+        </defs>
+        <rect x="4"  y="28" width="10" height="5"  rx="2.5" fill="url(#cg)"/>
+        <rect x="4"  y="16" width="10" height="17" rx="5"   fill="url(#cg)"/>
+        <rect x="7"  y="17" width="3"  height="13" rx="1.5" fill="#f48fb1" opacity=".35"/>
+        <rect x="30" y="32" width="10" height="5"  rx="2.5" fill="url(#cg)"/>
+        <rect x="30" y="22" width="10" height="15" rx="5"   fill="url(#cg)"/>
+        <rect x="33" y="23" width="3"  height="11" rx="1.5" fill="#f48fb1" opacity=".35"/>
+        <rect x="14" y="2"  width="16" height="68" rx="8"   fill="url(#cg)"/>
+        <rect x="18" y="4"  width="5"  height="62" rx="2.5" fill="#f48fb1" opacity=".3"/>
+        <line x1="14" y1="12" x2="9"  y2="10" stroke="#fce4f3" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="14" y1="22" x2="9"  y2="21" stroke="#fce4f3" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="14" y1="38" x2="9"  y2="37" stroke="#fce4f3" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="30" y1="15" x2="35" y2="13" stroke="#fce4f3" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="30" y1="28" x2="35" y2="27" stroke="#fce4f3" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="30" y1="45" x2="35" y2="44" stroke="#fce4f3" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="22" y1="2"  x2="20" y2="-3" stroke="#fce4f3" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="22" y1="2"  x2="24" y2="-3" stroke="#fce4f3" stroke-width="1.2" stroke-linecap="round"/>
+        <circle cx="22" cy="4" r="4.5" fill="#f48fb1" opacity=".9"/>
+        <circle cx="22" cy="4" r="2.5" fill="#fbbf24"/>
+      </svg>
+    </div>
+
+    <div id="gameOverScreen" class="game-over hidden">
+      <div class="game-over-card">
+        <h2>💔 Game Over</h2>
+        <p id="finalScore">Score: 0</p>
+        <button class="btn-sm" onclick="resetGame()">▶ კვლავ ცდა</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="quiz-card hidden" id="quizCard">
+    <h2 id="question">Loading...</h2>
+    <div id="choices" class="choices"></div>
+  </section>
+
+  <p class="hint">სწორი პასუხი = Dragon ხტება კაქტუსზე +2 ქულა 🌸 | პირველი 50-ზე — გამარჯვებული 🏆</p>
+</div>
+
+<!-- WINNER -->
+<div id="winner-screen">
+  <div class="winner-box">
+    <div class="crown">👑</div>
+    <h2>გამარჯვებული!</h2>
+    <div class="winner-name" id="wname">???</div>
+    <p class="sub" id="wscore">50 ქულა!</p>
+    <div class="confetti-row">🌸🎉💜🎉🌸</div>
+    <button class="btn-sm" onclick="fullRestart()">🔄 ახალი თამაში</button>
+  </div>
+</div>
+
+</main>
+<script>
+// ═══════════════════════════════════════════
+//  SINGLE PLAYER (local session only)
+// ═══════════════════════════════════════════
+const WIN_SCORE  = 50;
+const JUMP_PTS   = 2;
+
+const QS = [
+ {q: "რომელი თეგი ითვლება HTML დოკუმენტის 'ფესვად' (Root)?", a: ["<body>", "<head>", "<html>", "<root>"], c: 2},
+  {q: "რომელი თეგი გამოიყენება ყველაზე დიდი სათაურისთვის?", a: ["<h6>", "<h1>", "<header>", "<head>"], c: 1},
+  {q: "სად იწერება ისეთი ინფორმაცია, რომელიც ბრაუზერში არ ჩანს (მაგ. Title)?", a: ["<body>", "<html>", "<head>", "<footer>"], c: 2},
+  {q: "რომელი სიმბოლო გამოიყენება თეგის დასახურად?", a: ["/", "*", ">", "\\"], c: 0},
+  {q: "რა არის <!DOCTYPE html>-ის დანიშნულება?", a: ["საიტის ფერია", "ბრაუზერს ატყობინებს, რომ ეს არის HTML5", "ტექსტის ზომაა", "ლინკის ჩასასმელია"], c: 1},
+  {q: "რომელი თეგი გამოიყენება პარაგრაფის (აბზაცის) შესაქმნელად?", a: ["<p>", "<text>", "<a>", "<br>"], c: 0},
+  {q: "რომელი თეგით იქმნება ჰიპერბმული (Link)?", a: ["<link>", "<href>", "<a>", "<url>"], c: 2},
+  {q: "ვებ-გვერდის რომელი ნაწილი შეიცავს ხილულ კონტენტს?", a: ["<head>", "<body>", "<meta>", "<title>"], c: 1},
+  {q: "რომელი თეგით ვსვამთ სურათს HTML-ში?", a: ["<image>", "<pic>", "<img>", "<src>"], c: 2},
+  {q: "რომელი თეგი გამოიყენება დანომრილი (Ordered) სიის შესაქმნელად?", a: ["<ul>", "<ol>", "<li>", "<list>"], c: 1},
+  {q: "რომელი თეგი გამოიყენება დაუნომრავი (Unordered) სიის შესაქმნელად?", a: ["<ol>", "<ul>", "<li>", "<dl>"], c: 1},
+  {q: "რა არის 'li' თეგის დანიშნულება?", a: ["სიის ელემენტია", "ლინკის სახეობაა", "დიდი სათაურია", "სურათის ჩარჩოა"], c: 0},
+  {q: "რომელი ატრიბუტით მიეთითება სურათის გზა (წყარო)?", a: ["href", "link", "src", "alt"], c: 2},
+  {q: "რომელი ატრიბუტით გადაგვყავს ლინკი კონკრეტულ მისამართზე?", a: ["src", "href", "target", "link"], c: 1},
+  {q: "რომელი თეგი გამოიყენება ხაზის გადასატანად (Enter)?", a: ["<hr>", "<break>", "<br>", "<lb>"], c: 2},
+  {q: "რომელი თეგით იქმნება ჰორიზონტალური გამყოფი ხაზი?", a: ["<br>", "<line>", "<hr>", "<border>"], c: 2},
+  {q: "რომელი თეგი გამოიყენება ტექსტის გასამუქებლად?", a: ["<strong>", "<bold>", "ორივე სწორია", "არცერთი არ არის სწორი"], c: 2},
+  {q: "რომელი თეგი გამოიყენება ცხრილის (Table) შესაქმნელად?", a: ["<table>", "<grid>", "<tr>", "<td>"], c: 0},
+  {q: "რას ნიშნავს 'tr' თეგი ცხრილში?", a: ["Table Data", "Table Row (მწკრივი)", "Table Root", "Table Real"], c: 1},
+  {q: "რას ნიშნავს 'td' თეგი ცხრილში?", a: ["Table Row", "Table Design", "Table Data (უჯრა)", "Table Division"], c: 2},
+  {q: "რომელი თეგი გამოიყენება ფორმების (Forms) შესაქმნელად?", a: ["<input>", "<form>", "<select>", "<button>"], c: 1},
+  {q: "რომელი თეგი გამოიყენება ღილაკის შესაქმნელად?", a: ["<click>", "<btn>", "<button>", "<input type='text'>"], c: 2},
+  {q: "რომელი თეგი გამოიყენება ტექსტის დასახრელად (Italic)?", a: ["<i>", "<em>", "ორივე სწორია", "არცერთი არ არის სწორი"], c: 2},
+  {q: "სად იწერება <title> თეგი?", a: ["<body>-ში", "<head>-ში", "<html>-ის გარეთ", "<footer>-ში"], c: 1}
+];
+
+let myIdx = 0;
+let playerName = 'Player';
+
+// single-player state
+let score=0, isQuizActive=false, isGameOver=false, isJumping=false;
+let cactusX=900, groundOff=0, curQ=0, running=false;
+
+const DLEFT=80, DWIDTH=60, CW=42, SPEED=3, QDIST=220, GBOT=40, JH=158, JDUR=950;
+
+const dragon    = document.getElementById('dino');
+const cactusEl  = document.getElementById('obstacle');
+const groundEl  = document.getElementById('ground');
+const gameArea  = document.querySelector('.game-area');
+const quizCard  = document.getElementById('quizCard');
+const statusEl  = document.getElementById('status-bar');
+const gameOverEl= document.getElementById('gameOverScreen');
+const winScreen = document.getElementById('winner-screen');
+
+// ── LOBBY ──
+function startLobby(){
+  playerName = document.getElementById('n1').value.trim()||'Player';
+  myIdx = 0;
+  launchGame();
+}
+
+function launchGame(){
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('game-wrapper').style.display='flex';
+
+  document.getElementById('pn0').textContent = playerName;
+  document.getElementById('pc0').classList.add('me');
+  updateBoard([0]);
+
+  running=true;
+  dragon.classList.add('running');
+  resetCactus();
+  requestAnimationFrame(loop);
+}
+
+// ── SYNC ──
+function updateBoard(scores){
+  const v = scores[0] || 0;
+  document.getElementById('ps0').textContent = v;
+  document.getElementById('pp0').style.width = Math.min(v/WIN_SCORE*100,100)+'%';
+}
+
+function pushScore(){
+  updateBoard([score]);
+  if(score>=WIN_SCORE){
+    doWin(0, [playerName], score);
+  }
+}
+
+function doWin(idx,names,sc){
+  document.getElementById('wname').textContent=names[idx];
+  document.getElementById('wscore').textContent=sc+' ქულა!';
+  winScreen.classList.add('show');
+  document.getElementById('pc'+idx).classList.add('winner-flash');
+  playWin();
+}
+
+function fullRestart(){
+  location.reload();
+}
+
+// ── AUDIO ──
+let ac;
+function ea(){ if(ac)return; ac=new(window.AudioContext||window.webkitAudioContext)(); }
+function tone(f,d,tp='sine',v=.18,dl=0){
+  if(!ac)return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.type=tp; o.frequency.setValueAtTime(f,ac.currentTime+dl);
+  g.gain.setValueAtTime(v,ac.currentTime+dl);
+  g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dl+d);
+  o.connect(g);g.connect(ac.destination);
+  o.start(ac.currentTime+dl); o.stop(ac.currentTime+dl+d+.05);
+}
+function playJump()   { tone(500,.12,'triangle',.18);tone(650,.08,'triangle',.12,.1); }
+function playOK()     { tone(660,.1,'sine',.2);tone(880,.1,'sine',.2,.12);tone(1100,.15,'sine',.18,.24); }
+function playBad()    { tone(160,.3,'sawtooth',.22); }
+function playDead()   { tone(220,.25,'triangle',.25);tone(150,.35,'sine',.2,.2);tone(100,.5,'sine',.18,.45); }
+function playWin()    { [523,659,784,1047].forEach((f,i)=>tone(f,.2,'sine',.22,i*.18)); }
+
+function status(t,err=false){ statusEl.textContent=t; statusEl.style.color=err?'#ffeb3b':'#81d4fa'; }
+
+// ── SCORE ──
+function addPts(n){
+  score+=n;
+  document.getElementById('ps'+myIdx).textContent=score;
+  document.getElementById('pp'+myIdx).style.width=Math.min(score/WIN_SCORE*100,100)+'%';
+  pushScore();
+}
+
+// ── CACTUS ──
+function resetCactus(){
+  cactusX=(gameArea.clientWidth||840)+80+Math.random()*100;
+  cactusEl.style.left=cactusX+'px';
+}
+
+// ── JUMP ──
+function jump(){
+  if(isJumping)return;
+  isJumping=true; playJump();
+  dragon.classList.remove('running','crash'); dragon.classList.add('jumping'); dragon.style.zIndex='30';
+  const t0=performance.now();
+  (function step(now){
+    if(isGameOver){dragon.style.bottom=GBOT+'px';dragon.style.zIndex='20';return;}
+    const t=Math.min((now-t0)/JDUR,1);
+    dragon.style.bottom=(GBOT+Math.sin(Math.PI*t)*JH)+'px';
+    t<1?requestAnimationFrame(step):(
+      dragon.style.bottom=GBOT+'px', dragon.style.zIndex='20',
+      dragon.classList.remove('jumping'), isJumping=false,
+      isGameOver||dragon.classList.add('running')
+    );
+  })(t0);
+}
+
+// ── QUIZ ──
+function triggerQuiz(){
+  if(isQuizActive||isGameOver)return;
+  isQuizActive=true; dragon.classList.remove('running');
+  status('სწორი პასუხი → ხტომა! 🌸');
+  cactusX=DLEFT+DWIDTH+110; cactusEl.style.left=cactusX+'px';
+  curQ=Math.floor(Math.random()*QS.length);
+  const q=QS[curQ];
+  document.getElementById('question').textContent=q.q;
+  const ch=document.getElementById('choices'); ch.innerHTML='';
+  q.a.forEach((a,i)=>{
+    const b=document.createElement('button');
+    b.className='choice-btn'; b.textContent=a;
+    b.onclick=()=>answer(i); ch.appendChild(b);
+  });
+  quizCard.classList.remove('hidden');
+}
+
+function answer(idx){
+  ea(); if(!isQuizActive||isGameOver)return;
+  [...document.getElementById('choices').children].forEach(b=>b.disabled=true);
+  if(idx===QS[curQ].c){
+    playOK(); addPts(JUMP_PTS);
+    status('+'+JUMP_PTS+' ქულა! Dragon ხტება! 🌸');
+    quizCard.classList.add('hidden'); isQuizActive=false;
+    cactusX=DLEFT+DWIDTH+80; cactusEl.style.left=cactusX+'px';
+    jump();
+  } else {
+    playBad(); gameOver('არასწორი — კაქტუსმა გიჭირა! 💔');
+  }
+}
+
+// ── GAME OVER ──
+function gameOver(msg){
+  isGameOver=true; playDead(); status(msg,true);
+  dragon.classList.remove('running','jumping'); dragon.classList.add('crash');
+  cactusX=DLEFT+DWIDTH-8; cactusEl.style.left=cactusX+'px';
+  document.getElementById('finalScore').textContent='შენი ქულა: '+score;
+  gameOverEl.classList.remove('hidden');
+}
+
+function resetGame(){
+  ea(); isGameOver=false; isQuizActive=false; isJumping=false; score=0;
+  updateBoard([0]);
+  status('გაიქეცი! 🌸');
+  dragon.classList.remove('crash','jumping'); dragon.style.bottom=GBOT+'px'; dragon.classList.add('running');
+  gameOverEl.classList.add('hidden'); quizCard.classList.add('hidden'); resetCactus();
+}
+
+// ── COLLISION ──
+function checkCol(){
+  if(isJumping||isQuizActive||isGameOver)return;
+  if(cactusX+CW>DLEFT+10 && cactusX<DLEFT+DWIDTH-10) gameOver('კაქტუსი გეხება! 💔');
+}
+
+// ── LOOP ──
+function loop(){
+  if(running&&!isGameOver){
+    groundOff=(groundOff-SPEED)%64;
+    groundEl.style.backgroundPositionX=groundOff+'px';
+    if(!isQuizActive){ cactusX-=SPEED; cactusEl.style.left=cactusX+'px'; }
+    checkCol();
+    if(cactusX+CW<0) resetCactus();
+    if(!isQuizActive&&!isJumping&&cactusX>DLEFT+DWIDTH&&cactusX<=DLEFT+DWIDTH+QDIST) triggerQuiz();
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
