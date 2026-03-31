@@ -270,6 +270,14 @@ body::before{
 
 
 
+/* Red Flash for Collision */
+
+@keyframes red-flash{0%,100%{filter:sepia(0) saturate(1) hue-rotate(0deg);}50%{filter:sepia(1) saturate(5) hue-rotate(-50deg) brightness(1.2);}}
+
+.hit{animation:red-flash 0.3s ease-in-out;}
+
+
+
 /* OVERLAYS */
 
 .game-over{position:absolute;inset:0;background:rgba(255,220,240,.88);
@@ -765,6 +773,8 @@ let cactusX=900, groundOff=0, curQ=0, running=false;
 
 let lives = 3;
 
+let isApproaching = false;
+
 
 
 let availableQuestions = [...QS]; // Copy of original questions for random selection without repetition
@@ -1208,31 +1218,81 @@ function jump(){
 
 function triggerQuiz(){
 
-  if(isQuizActive||isGameOver)return;
+  if(isQuizActive||isGameOver||isApproaching)return;
 
-  isQuizActive=true; dragon.classList.remove('running');
+  isApproaching = true;
 
-  status('სწორი პასუხი → ხტომა! 🌸');
+  // Smooth approach: animate cactus to position next to dragon
 
-  cactusX=DLEFT+DWIDTH+110; cactusEl.style.left=cactusX+'px';
+  const targetCactusX = DLEFT + DWIDTH + 20;
 
-  currentQuestion = getNewQuestion();
+  const startCactusX = cactusX;
 
-  document.getElementById('question').textContent=currentQuestion.q;
+  const startTime = performance.now();
 
-  const ch=document.getElementById('choices'); ch.innerHTML='';
+  const duration = 500; // Smooth 0.5s animation
 
-  currentQuestion.a.forEach((a,i)=>{
+  dragon.classList.remove('running'); // Stop running animation smoothly
 
-    const b=document.createElement('button');
+  function animate(now){
 
-    b.className='choice-btn'; b.textContent=a;
+    const t = Math.min((now - startTime) / duration, 1);
 
-    b.onclick=()=>answer(i); ch.appendChild(b);
+    const easeT = t * t * (3 - 2 * t); // Smooth easing
 
-  });
+    cactusX = startCactusX + (targetCactusX - startCactusX) * easeT;
 
-  quizCard.classList.remove('hidden');
+    cactusEl.style.left = cactusX + 'px';
+
+    if(t < 1){
+
+      requestAnimationFrame(animate);
+
+    } else {
+
+      isQuizActive = true;
+
+      isApproaching = false;
+
+      status('სწორი პასუხი → ხტომა! 🌸');
+
+      // Fade in quiz smoothly
+
+      quizCard.style.opacity = '0';
+
+      quizCard.classList.remove('hidden');
+
+      quizCard.style.transition = 'opacity 0.3s ease';
+
+      setTimeout(() => quizCard.style.opacity = '1', 10);
+
+      currentQuestion = getNewQuestion();
+
+      document.getElementById('question').textContent = currentQuestion.q;
+
+      const ch = document.getElementById('choices');
+
+      ch.innerHTML = '';
+
+      currentQuestion.a.forEach((a,i)=>{
+
+        const b = document.createElement('button');
+
+        b.className = 'choice-btn';
+
+        b.textContent = a;
+
+        b.onclick = () => answer(i);
+
+        ch.appendChild(b);
+
+      });
+
+    }
+
+  }
+
+  requestAnimationFrame(animate);
 
 }
 
@@ -1278,25 +1338,57 @@ function answer(idx){
 
       status('არასწორი! -1 სიცოცხლე (' + lives + ' დარჩა) 💔');
 
-      // Crash animation but continue
+      // Smooth collision animation for damage
 
-      dragon.classList.remove('running','jumping'); dragon.classList.add('crash');
+      const targetCactusX = DLEFT + DWIDTH - 8;
 
-      cactusX=DLEFT+DWIDTH-8; cactusEl.style.left=cactusX+'px';
+      const startCactusX = cactusX;
 
-      setTimeout(() => {
+      const startTime = performance.now();
 
-        if(!isGameOver){
+      const duration = 300;
 
-          dragon.classList.remove('crash'); dragon.classList.add('running');
+      dragon.classList.remove('running','jumping');
 
-          resetCactus();
+      function animate(now){
 
-          status('გაიქეცი! 🌸');
+        const t = Math.min((now - startTime) / duration, 1);
+
+        const easeT = t * t * (3 - 2 * t);
+
+        cactusX = startCactusX + (targetCactusX - startCactusX) * easeT;
+
+        cactusEl.style.left = cactusX + 'px';
+
+        if(t < 1){
+
+          requestAnimationFrame(animate);
+
+        } else {
+
+          dragon.classList.add('crash', 'hit');
+
+          setTimeout(() => {
+
+            if(!isGameOver){
+
+              dragon.classList.remove('crash', 'hit');
+
+              dragon.classList.add('running');
+
+              resetCactus();
+
+              status('გაიქეცი! 🌸');
+
+            }
+
+          }, 1500);
 
         }
 
-      }, 1500);
+      }
+
+      requestAnimationFrame(animate);
 
       quizCard.classList.add('hidden'); isQuizActive=false;
 
@@ -1324,13 +1416,45 @@ function gameOver(msg){
 
   }
 
-  dragon.classList.remove('running','jumping'); dragon.classList.add('crash');
+  // Smooth collision animation
 
-  cactusX=DLEFT+DWIDTH-8; cactusEl.style.left=cactusX+'px';
+  const targetCactusX = DLEFT + DWIDTH - 8;
 
-  document.getElementById('finalScore').textContent='შენი ქულა: '+score;
+  const startCactusX = cactusX;
 
-  gameOverEl.classList.remove('hidden');
+  const startTime = performance.now();
+
+  const duration = 300; // 0.3s smooth collision
+
+  dragon.classList.remove('running','jumping');
+
+  function animate(now){
+
+    const t = Math.min((now - startTime) / duration, 1);
+
+    const easeT = t * t * (3 - 2 * t); // Smooth easing
+
+    cactusX = startCactusX + (targetCactusX - startCactusX) * easeT;
+
+    cactusEl.style.left = cactusX + 'px';
+
+    if(t < 1){
+
+      requestAnimationFrame(animate);
+
+    } else {
+
+      dragon.classList.add('crash', 'hit'); // Add crash and red flash
+
+      document.getElementById('finalScore').textContent='შენი ქულა: '+score;
+
+      gameOverEl.classList.remove('hidden');
+
+    }
+
+  }
+
+  requestAnimationFrame(animate);
 
 }
 
@@ -1338,7 +1462,7 @@ function gameOver(msg){
 
 function resetGame(){
 
-  ea(); isGameOver=false; isQuizActive=false; isJumping=false; score=0; lives=3;
+  ea(); isGameOver=false; isQuizActive=false; isJumping=false; score=0; lives=3; isApproaching=false;
 
   updateLives();
 
@@ -1356,9 +1480,9 @@ function resetGame(){
 
   }
 
-  dragon.classList.remove('crash','jumping'); dragon.style.bottom=GBOT+'px'; dragon.classList.add('running');
+  dragon.classList.remove('crash','jumping', 'hit'); dragon.style.bottom=GBOT+'px'; dragon.classList.add('running');
 
-  gameOverEl.classList.add('hidden'); quizCard.classList.add('hidden'); resetCactus();
+  gameOverEl.classList.add('hidden'); quizCard.classList.add('hidden'); quizCard.style.opacity = '1'; resetCactus();
 
 }
 
@@ -1388,7 +1512,7 @@ function loop(){
 
     // without the distraction of moving obstacles. Movement resumes automatically once isQuizActive becomes false.
 
-    if(!isQuizActive){
+    if(!isQuizActive && !isApproaching){
 
       groundOff=(groundOff-SPEED)%64;
 
