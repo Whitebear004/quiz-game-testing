@@ -262,6 +262,14 @@ body::before{
 
 
 
+/* Flicker Animation for Wrong Answer */
+
+@keyframes flicker{0%,100%{opacity:1;}25%{opacity:0.3;}50%{opacity:1;}75%{opacity:0.3;}}
+
+.flicker{animation:flicker 0.5s ease-in-out;}
+
+
+
 /* OVERLAYS */
 
 .game-over{position:absolute;inset:0;background:rgba(255,220,240,.88);
@@ -389,13 +397,10 @@ body::before{
   </div>
 
   <div class="lobby-info">
-
     📋 <strong>Single Player Mode:</strong><br>
-
-    2. ყოველ არასწორ პასუხზე მოგიწევს თამაშის თავიდან დაწყება 📱<br>
-
+    3. სიცოცხლეები: 3 🌸 — არასწორი პასუხი = -1 სიცოცხლე<br>
+    2. ყოველ არასწორ პასუხზე ვიზუალური ეფექტი (ფლიკერი)<br>
     1. შეიყვანე თქვენი სახელი ➜ დააჭირეთ თამაშის დაწყება<br>
-
     სულ🏆25 კითხვაა, 1 კითხვა 2 ქულიანია.
 
   </div>
@@ -411,11 +416,11 @@ body::before{
 <div id="game-wrapper">
 
   <div class="top-bar">
-
     <h1>🐉 Dragon Quiz 🌸</h1>
-
-    <div id="status-bar">გაიქეცი!</div>
-
+    <div style="display:flex; gap:1rem; align-items:center;">
+      <div id="lives-bar">სიცოცხლეები: 🌸🌸🌸</div>
+      <div id="status-bar">გაიქეცი!</div>
+    </div>
   </div>
 
 
@@ -600,7 +605,7 @@ body::before{
 
 
 
-  <p class="hint">სწორი პასუხი = Dragon ხტება კაქტუსზე +2 ქულა 🌸 | სწორი პასუხი = თამაშის თავიდან დაწყება</p>
+  <p class="hint">სწორი პასუხი = Dragon ხტება კაქტუსზე +2 ქულა 🌸 | არასწორი = -1 სიცოცხლე</p>
 
 </div>
 
@@ -758,6 +763,8 @@ let score=0, isQuizActive=false, isGameOver=false, isJumping=false;
 
 let cactusX=900, groundOff=0, curQ=0, running=false;
 
+let lives = 3;
+
 
 
 let availableQuestions = [...QS]; // Copy of original questions for random selection without repetition
@@ -881,6 +888,10 @@ function launchGame(){
 
   document.getElementById('pc0').classList.add('me');
 
+  lives = 3;
+
+  updateLives();
+
   updateBoard([0]);
 
   running=true;
@@ -904,6 +915,16 @@ function updateBoard(scores){
   document.getElementById('ps0').textContent = v;
 
   document.getElementById('pp0').style.width = Math.min(v/WIN_SCORE*100,100)+'%';
+
+}
+
+
+
+function updateLives(){
+
+  const livesBar = document.getElementById('lives-bar');
+
+  livesBar.textContent = 'სიცოცხლეები: ' + '🌸'.repeat(lives);
 
 }
 
@@ -1237,7 +1258,49 @@ function answer(idx){
 
   } else {
 
-    playBad(); gameOver('არასწორი — კაქტუსმა გიჭირა! 💔');
+    playBad();
+
+    lives--;
+
+    updateLives();
+
+    // Flicker effect
+
+    gameArea.classList.add('flicker');
+
+    setTimeout(() => gameArea.classList.remove('flicker'), 500);
+
+    if(lives <= 0){
+
+      gameOver('არასწორი — კაქტუსმა გიჭირა! 💔');
+
+    } else {
+
+      status('არასწორი! -1 სიცოცხლე (' + lives + ' დარჩა) 💔');
+
+      // Crash animation but continue
+
+      dragon.classList.remove('running','jumping'); dragon.classList.add('crash');
+
+      cactusX=DLEFT+DWIDTH-8; cactusEl.style.left=cactusX+'px';
+
+      setTimeout(() => {
+
+        if(!isGameOver){
+
+          dragon.classList.remove('crash'); dragon.classList.add('running');
+
+          resetCactus();
+
+          status('გაიქეცი! 🌸');
+
+        }
+
+      }, 1500);
+
+      quizCard.classList.add('hidden'); isQuizActive=false;
+
+    }
 
   }
 
@@ -1275,7 +1338,9 @@ function gameOver(msg){
 
 function resetGame(){
 
-  ea(); isGameOver=false; isQuizActive=false; isJumping=false; score=0;
+  ea(); isGameOver=false; isQuizActive=false; isJumping=false; score=0; lives=3;
+
+  updateLives();
 
   updateBoard([0]);
 
