@@ -248,7 +248,7 @@ body::before{
 
 #dino.jumping .dragon-wing{animation:wing-beat-fast .22s ease-in-out infinite;transform-origin:50px 20px;}
 
-#dino.crash{animation:crash-shake .4s ease-out forwards;}
+#dino.crash{animation:crash-shake .4s ease-out forwards; filter: grayscale(1);}
 
 
 
@@ -605,7 +605,7 @@ body::before{
 
 
 
-  <p class="hint">სწორი პასუხი = Dragon ხტება კაქტუსზე +2 ქულა 🌸 | არასწორი = -1 სიცოცხლე</p>
+  <p class="hint">სწორი პასუხი = Dragon ხტება კაქტუსზე +2 ქულა 🌸 | არასწორი = -1 სიცოცხლე, -5 ქულა</p>
 
 </div>
 
@@ -1262,43 +1262,77 @@ function answer(idx){
 
     lives--;
 
+    score = Math.max(0, score - 5);
+
     updateLives();
 
-    // Flicker effect
+    updateBoard([score]);
 
-    gameArea.classList.add('flicker');
+    // Visual feedback: red flash on screen, shake dragon
 
-    setTimeout(() => gameArea.classList.remove('flicker'), 500);
+    gameArea.classList.add('red-flash');
+
+    dragon.classList.add('shake');
+
+    setTimeout(() => {
+
+      gameArea.classList.remove('red-flash');
+
+      dragon.classList.remove('shake');
+
+    }, 500);
 
     if(lives <= 0){
+
+      // Final life, let collide
+
+      isQuizActive = false;
+
+      cactusX = DLEFT + DWIDTH - 10; // Overlap to trigger collision
+
+      cactusEl.style.left = cactusX + 'px';
 
       gameOver('არასწორი — კაქტუსმა გიჭირა! 💔');
 
     } else {
 
-      status('არასწორი! -1 სიცოცხლე (' + lives + ' დარჩა) 💔');
+      // Intermediate wrong, stop smoothly in front
 
-      // Crash animation but continue
+      dragon.classList.remove('running', 'jumping');
 
-      dragon.classList.remove('running','jumping'); dragon.classList.add('crash');
+      status('არასწორია! სცადე თავიდან');
 
-      cactusX=DLEFT+DWIDTH-8; cactusEl.style.left=cactusX+'px';
+      // Regenerate question
+
+      currentQuestion = getNewQuestion();
+
+      document.getElementById('question').textContent = currentQuestion.q;
+
+      const ch = document.getElementById('choices');
+
+      ch.innerHTML = '';
+
+      currentQuestion.a.forEach((a,i)=>{
+
+        const b = document.createElement('button');
+
+        b.className = 'choice-btn';
+
+        b.textContent = a;
+
+        b.onclick = () => answer(i);
+
+        ch.appendChild(b);
+
+      });
+
+      // Re-enable buttons
 
       setTimeout(() => {
 
-        if(!isGameOver){
+        [...ch.children].forEach(b=>b.disabled=false);
 
-          dragon.classList.remove('crash'); dragon.classList.add('running');
-
-          resetCactus();
-
-          status('გაიქეცი! 🌸');
-
-        }
-
-      }, 1500);
-
-      quizCard.classList.add('hidden'); isQuizActive=false;
+      }, 500);
 
     }
 
