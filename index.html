@@ -899,6 +899,10 @@ let lives = 3;
 
 let isApproaching = false;
 
+let prevCactusX = cactusX; // Track previous frame position for hysteresis detection
+
+let hasTriggeredThisPass = false; // Prevent multiple triggers for the same cactus pass
+
 
 
 let availableQuestions = [...QS]; // Copy of original questions for random selection without repetition
@@ -1298,6 +1302,10 @@ function resetCactus(){
 
   cactusEl.style.left=cactusX+'px';
 
+  hasTriggeredThisPass = false; // Reset trigger flag for new cactus
+
+  prevCactusX = cactusX; // Sync previous position
+
 }
 
 
@@ -1340,6 +1348,55 @@ function jump(){
 
 // ── QUIZ ──
 
+function shouldTriggerQuiz(){
+
+  // Hysteresis-based detection: Check if cactus CROSSED INTO trigger zone
+  // instead of just checking if it's in the zone. This prevents frame-skipping issues.
+
+  
+
+  const triggerZoneStart = DLEFT + DWIDTH; // 140px
+
+  const triggerZoneEnd = DLEFT + DWIDTH + QDIST; // 290px
+
+  
+
+  // Only trigger if:
+
+  // 1. We haven't already triggered for this cactus pass
+
+  // 2. Cactus was OUTSIDE zone in previous frame (prevCactusX > triggerZoneEnd)
+
+  // 3. Cactus is NOW INSIDE zone (triggerZoneEnd >= cactusX > triggerZoneStart)
+
+  
+
+  if(hasTriggeredThisPass){
+
+    return false; // Already triggered for this cactus
+
+  }
+
+  
+
+  // Detect crossing from right side into trigger zone
+
+  // Previous frame: cactus beyond zone, current frame: cactus entering zone
+
+  if(prevCactusX > triggerZoneEnd && cactusX <= triggerZoneEnd && cactusX > triggerZoneStart){
+
+    hasTriggeredThisPass = true;
+
+    return true;
+
+  }
+
+  
+
+  return false;
+
+}
+
 function triggerQuiz(){
 
   if(isQuizActive||isGameOver||isApproaching)return;
@@ -1368,11 +1425,23 @@ function triggerQuiz(){
 
     cactusEl.style.left = cactusX + 'px';
 
+    prevCactusX = cactusX; // Keep tracking for consistency
+
     if(t < 1){
 
       requestAnimationFrame(animate);
 
     } else {
+
+      // Animation complete: lock positions and activate quiz
+
+      cactusX = targetCactusX;
+
+      cactusEl.style.left = cactusX + 'px';
+
+      prevCactusX = cactusX;
+
+      
 
       isQuizActive = true;
 
@@ -1413,15 +1482,25 @@ function triggerQuiz(){
       });
 
       // ─────────────────────────────────────────────
+
       // AUTO-SCROLL TO QUIZ CARD FOR MOBILE UX
+
       // ─────────────────────────────────────────────
+
       // Scroll quiz card into view with smooth behavior
+
       // Delay ensures the card fade-in starts before scroll
+
       setTimeout(() => {
+
         quizCard.scrollIntoView({
+
           behavior: 'smooth',
+
           block: 'center'  // Center the quiz card in the viewport
+
         });
+
       }, 50);
 
     }
