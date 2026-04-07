@@ -378,6 +378,10 @@ body::before{
 
 .choice-btn:disabled{cursor:not-allowed;opacity:.55;}
 
+.quiz-desc{display:none;margin-top:.7rem;padding:.65rem .75rem;border-radius:10px;
+  border:1px solid rgba(129,212,250,.45);background:rgba(8,20,70,.45);
+  color:#e3f2fd;font-size:.88rem;line-height:1.45;font-weight:700;}
+
 
 
 .btn-sm{font-family:'Fredoka One',cursive;background:linear-gradient(145deg,#0d47a1,#1976d2);
@@ -733,6 +737,8 @@ body::before{
 
     <div id="choices" class="choices"></div>
 
+    <div id="questionDesc" class="quiz-desc"></div>
+
   </section>
 
 
@@ -822,66 +828,155 @@ body::before{
 //  SINGLE PLAYER (local session only)
 
 // ═══════════════════════════════════════════
-
 const WIN_SCORE  = 50;
-
 const JUMP_PTS   = 2;
 
-
-
 const QS = [
-
- {q: "რომელი თეგი ითვლება HTML დოკუმენტის 'ფესვად' (Root)?", a: ["<body>", "<head>", "<html>", "<root>"], c: 2},
-
-  {q: "რომელი თეგი გამოიყენება ყველაზე დიდი სათაურისთვის?", a: ["<h6>", "<h1>", "<header>", "<head>"], c: 1},
-
-  {q: "სად იწერება ისეთი ინფორმაცია, რომელიც ბრაუზერში არ ჩანს (მაგ. Title)?", a: ["<body>", "<html>", "<head>", "<footer>"], c: 2},
-
-  {q: "რომელი სიმბოლო გამოიყენება თეგის დასახურად?", a: ["/", "*", ">", "\\"], c: 0},
-
-  {q: "რა არის <!DOCTYPE html>-ის დანიშნულება?", a: ["საიტის ფერია", "ბრაუზერს ატყობინებს, რომ ეს არის HTML5", "ტექსტის ზომაა", "ლინკის ჩასასმელია"], c: 1},
-
-  {q: "რომელი თეგი გამოიყენება პარაგრაფის (აბზაცის) შესაქმნელად?", a: ["<p>", "<text>", "<a>", "<br>"], c: 0},
-
-  {q: "რომელი თეგით იქმნება ჰიპერბმული (Link)?", a: ["<link>", "<href>", "<a>", "<url>"], c: 2},
-
-  {q: "ვებ-გვერდის რომელი ნაწილი შეიცავს ხილულ კონტენტს?", a: ["<head>", "<body>", "<meta>", "<title>"], c: 1},
-
-  {q: "რომელი თეგით ვსვამთ სურათს HTML-ში?", a: ["<image>", "<pic>", "<img>", "<src>"], c: 2},
-
-  {q: "რომელი თეგი გამოიყენება დანომრილი (Ordered) სიის შესაქმნელად?", a: ["<ul>", "<ol>", "<li>", "<list>"], c: 1},
-
-  {q: "რომელი თეგი გამოიყენება დაუნომრავი (Unordered) სიის შესაქმნელად?", a: ["<ol>", "<ul>", "<li>", "<dl>"], c: 1},
-
-  {q: "რა არის 'li' თეგის დანიშნულება?", a: ["სიის ელემენტია", "ლინკის სახეობაა", "დიდი სათაურია", "სურათის ჩარჩოა"], c: 0},
-
-  {q: "რომელი ატრიბუტით მიეთითება სურათის გზა (წყარო)?", a: ["href", "link", "src", "alt"], c: 2},
-
-  {q: "რომელი ატრიბუტით გადაგვყავს ლინკი კონკრეტულ მისამართზე?", a: ["src", "href", "target", "link"], c: 1},
-
-  {q: "რომელი თეგი გამოიყენება ხაზის გადასატანად (Enter)?", a: ["<hr>", "<break>", "<br>", "<lb>"], c: 2},
-
-  {q: "რომელი თეგით იქმნება ჰორიზონტალური გამყოფი ხაზი?", a: ["<br>", "<line>", "<hr>", "<border>"], c: 2},
-
-  {q: "რომელი თეგი გამოიყენება ტექსტის გასამუქებლად?", a: ["<strong>", "<bold>", "ორივე სწორია", "არცერთი არ არის სწორი"], c: 2},
-
-  {q: "რომელი თეგი გამოიყენება ცხრილის (Table) შესაქმნელად?", a: ["<table>", "<grid>", "<tr>", "<td>"], c: 0},
-
-  {q: "რას ნიშნავს 'tr' თეგი ცხრილში?", a: ["Table Data", "Table Row (მწკრივი)", "Table Root", "Table Real"], c: 1},
-
-  {q: "რას ნიშნავს 'td' თეგი ცხრილში?", a: ["Table Row", "Table Design", "Table Data (უჯრა)", "Table Division"], c: 2},
-
-  {q: "რომელი თეგი გამოიყენება ფორმების (Forms) შესაქმნელად?", a: ["<input>", "<form>", "<select>", "<button>"], c: 1},
-
-  {q: "რომელი თეგი გამოიყენება ღილაკის შესაქმნელად?", a: ["<click>", "<btn>", "<button>", "<input type='text'>"], c: 2},
-
-  {q: "რომელი თეგი გამოიყენება ტექსტის დასახრელად (Italic)?", a: ["<i>", "<em>", "ორივე სწორია", "არცერთი არ არის სწორი"], c: 2},
-
-  {q: "სად იწერება <title> თეგი?", a: ["<body>-ში", "<head>-ში", "<html>-ის გარეთ", "<footer>-ში"], c: 1}
-
+  {
+    q: "რომელი ატრიბუტი გამოიყენება სურათის ალტერნატიული ტექსტისთვის?",
+    a: ["title", "alt", "desc", "caption"],
+    c: 1,
+    desc: "alt ატრიბუტი აუცილებელია ეკრანის მკითხველებისთვის (Screen Readers) და იმ შემთხვევისთვის, თუ სურათი ვერ ჩაიტვირთა."
+  },
+  {
+    q: "რომელი სემანტიკური თეგი გამოიყენება საიტის ნავიგაციისთვის?",
+    a: ["<section>", "<menu>", "<nav>", "<links>"],
+    c: 2,
+    desc: "<nav> თეგი ეხმარება საძიებო სისტემებს (SEO), აღიქვან მოცემული ბლოკი, როგორც საიტის მთავარი მენიუ."
+  },
+  {
+    q: "რომელ input type-ს ვიყენებთ პაროლის დასამალად?",
+    a: ["text", "hidden", "password", "secret"],
+    c: 2,
+    desc: "type='password' ავტომატურად ფარავს შეყვანილ სიმბოლოებს წერტილებით ან ვარსკვლავებით."
+  },
+  {
+    q: "რომელი თეგი გამოიყენება ჩამოშლადი (Dropdown) სიის შესაქმნელად?",
+    a: ["<list>", "<select>", "<dropdown>", "<input>"],
+    c: 1,
+    desc: "<select> თეგი გამოიყენება კონტეინერად, ხოლო მის შიგნით ელემენტები იწერება <option> თეგით."
+  },
+  {
+    q: "როგორ იხსნება ლინკი ახალ ფანჯარაში (Tab)?",
+    a: ["target='_self'", "target='_blank'", "target='_new'", "open='blank'"],
+    c: 1,
+    desc: "target='_blank' ატრიბუტი აიძულებს ბრაუზერს, გახსნას ბმული ახალ გვერდზე მიმდინარე გვერდის დახურვის გარეშე."
+  },
+  {
+    q: "რომელი თეგი გამოიყენება მრავალხაზოვანი ტექსტის შესაყვანად?",
+    a: ["<input type='text'>", "<textarea>", "<text>", "<box>"],
+    c: 1,
+    desc: "<textarea> საშუალებას აძლევს მომხმარებელს შეიყვანოს დიდი მოცულობის ტექსტი, მაგალითად, კომენტარი."
+  },
+  {
+    q: "რას ნიშნავს HTML?",
+    a: ["High Text Markup Language", "Hyper Tabular Markup Language", "Hyper Text Markup Language", "None of the above"],
+    c: 2,
+    desc: "HTML არის ჰიპერტექსტური მარკირების ენა, რომელიც განსაზღვრავს ვებ-გვერდის სტრუქტურას."
+  },
+  {
+    q: "რომელი თეგი გამოიყენება აუდიო ფაილის ჩასასმელად?",
+    a: ["<sound>", "<music>", "<audio>", "<video>"],
+    c: 2,
+    desc: "HTML5-ში <audio> თეგი საშუალებას გვაძლევს ჩავსვათ მუსიკა ან ხმოვანი ფაილები დამატებითი ფლეერების გარეშე."
+  },
+  {
+    q: "რომელი ელემენტი გამოიყენება ცხრილის სათაურის (Header) უჯრისთვის?",
+    a: ["<td>", "<tr>", "<th>", "<head>"],
+    c: 2,
+    desc: "<th> (Table Header) ტექსტს ავტომატურად ხდის მუქს და აცენტრებს უჯრაში."
+  },
+  {
+    q: "რომელი თეგი განსაზღვრავს გვერდის მთავარ შინაარსს?",
+    a: ["<section>", "<article>", "<main>", "<div>"],
+    c: 2,
+    desc: "<main> თეგი გვერდზე მხოლოდ ერთხელ უნდა იყოს და ის მოიცავს გვერდის უნიკალურ, ძირითად კონტენტს."
+  },
+  {
+    q: "რომელი ატრიბუტით ვუთითებთ input ველს, რომ შევსება სავალდებულოა?",
+    a: ["important", "validate", "required", "must"],
+    c: 2,
+    desc: "required ატრიბუტი ბრაუზერს უკრძალავს ფორმის გაგზავნას, თუ მოცემული ველი ცარიელია."
+  },
+  {
+    q: "რომელი თეგი გამოიყენება ვებ-გვერდის ქვედა ნაწილისთვის (Footer)?",
+    a: ["<bottom>", "<end>", "<footer>", "<base>"],
+    c: 2,
+    desc: "<footer> გამოიყენება საავტორო უფლებების, საკონტაქტო ინფორმაციის ან საიტის რუკის მოსათავსებლად."
+  },
+  {
+    q: "რომელი სიმბოლო გამოიყენება ID სელექტორის მისათითებლად CSS-ში?",
+    a: [".", "#", "&", "@"],
+    c: 1,
+    desc: "HTML-ში განსაზღვრულ id ატრიბუტს CSS-ში მივმართავთ '#' (ჰეშთეგის) საშუალებით."
+  },
+  {
+    q: "რა ეწოდება თეგს, რომელსაც არ აქვს დამხურავი თეგი?",
+    a: ["Empty/Self-closing", "Single", "Hidden", "Broken"],
+    c: 0,
+    desc: "ასეთ თეგებს (მაგ: <img>, <br>, <hr>) არ აქვთ შინაარსი და ამიტომ არ საჭიროებენ დამხურავ თეგს."
+  },
+  {
+    q: "რომელი თეგით განისაზღვრება დოკუმენტის მეტამონაცემები?",
+    a: ["<data>", "<meta>", "<info>", "<link>"],
+    c: 1,
+    desc: "<meta> თეგები იწერება <head>-ში და შეიცავს ინფორმაციას კოდირების (UTF-8), ავტორისა და SEO-ს შესახებ."
+  },
+  {
+    q: "როგორ იწერება კომენტარი HTML-ში?",
+    a: ["// კომენტარი", "/* კომენტარი */", "", "' კომენტარი"],
+    c: 2,
+    desc: "HTML კომენტარები ბრაუზერში არ ჩანს და გამოიყენება კოდში შენიშვნების დასატოვებლად."
+  },
+  {
+    q: "რომელი თეგი გამოიყენება ციტირებისთვის?",
+    a: ["<cite>", "<quote>", "<blockquote>", "<q>"],
+    c: 2,
+    desc: "<blockquote> გამოიყენება გრძელი ციტატების ბლოკად გამოსაყოფად სხვა ტექსტისგან."
+  },
+  {
+    q: "რას ნიშნავს 'href' აბრევიატურა?",
+    a: ["Hypertext Reference", "Home Reference", "Hyperlink Free", "Horizontal Ref"],
+    c: 0,
+    desc: "ეს არის 'ჰიპერტექსტური მიმართვა', რომელიც მიუთითებს იმ URL მისამართს, სადაც ლინკი გადაგვიყვანს."
+  },
+  {
+    q: "რომელი ატრიბუტი გამოიყენება სურათის სიგანის დასაყენებლად?",
+    a: ["size", "width", "length", "pixels"],
+    c: 1,
+    desc: "width ატრიბუტით განვსაზღვრავთ სურათის ჰორიზონტალურ ზომას პიქსელებში ან პროცენტებში."
+  },
+  {
+    q: "რომელი თეგი გამოიყენება პროგრამული კოდის გამოსაჩენად?",
+    a: ["<pre>", "<code>", "<script>", "<var>"],
+    c: 1,
+    desc: "<code> თეგი გამოიყენება ტექსტის მონოსპეის (Monospace) ფონტით გამოსასახად, რაც დამახასიათებელია კოდისთვის."
+  },
+  {
+    q: "რომელი input type გამოიყენება ფერის ასარჩევად?",
+    a: ["type='palette'", "type='hex'", "type='color'", "type='paint'"],
+    c: 2,
+    desc: "type='color' ხსნის ოპერაციული სისტემის სტანდარტულ ფერების ამრჩევ (Color Picker) პანელს."
+  },
+  {
+    q: "რომელი ელემენტი გამოიყენება ფორმის ელემენტების დასაჯგუფებლად?",
+    a: ["<group>", "<section>", "<fieldset>", "<block>"],
+    c: 2,
+    desc: "<fieldset> თეგი ვიზუალურად აჯგუფებს დაკავშირებულ ველებს და ხშირად გამოიყენება <legend>-თან ერთად."
+  },
+  {
+    q: "რომელი თეგი გამოიყენება მნიშვნელოვანი ტექსტისთვის?",
+    a: ["<b>", "<i>", "<strong>", "<span>"],
+    c: 2,
+    desc: "<b>-სგან განსხვავებით, <strong> მიანიშნებს, რომ ტექსტს აქვს სემანტიკური მნიშვნელობა და არა მხოლოდ ვიზუალური სიმუქე."
+  },
+  {
+    q: "რა ეწოდება HTML დოკუმენტის იერარქიულ სტრუქტურას?",
+    a: ["DOM", "BOM", "CSS", "API"],
+    c: 0,
+    desc: "DOM (Document Object Model) არის ხისებრი სტრუქტურა, რომელსაც ბრაუზერი აგებს HTML კოდისგან."
+  }
 ];
-
-
 
 let myIdx = 0;
 
@@ -930,6 +1025,8 @@ const gameArea  = document.querySelector('.game-area');
 
 const quizCard  = document.getElementById('quizCard');
 
+const quizDescEl = document.getElementById('questionDesc');
+
 const statusEl  = document.getElementById('status-bar');
 
 const gameOverEl= document.getElementById('gameOverScreen');
@@ -976,7 +1073,7 @@ function startLobby(){
 
       nameInput.classList.remove('input-error');
 
-    }, 500);
+    }, 4500);
 
    
 
@@ -1463,6 +1560,10 @@ function triggerQuiz(){
 
       document.getElementById('question').textContent = currentQuestion.q;
 
+      quizDescEl.style.display = 'none';
+
+      quizDescEl.textContent = '';
+
       const ch = document.getElementById('choices');
 
       ch.innerHTML = '';
@@ -1523,6 +1624,10 @@ function answer(idx){
 
     playOK(); addPts(JUMP_PTS);
 
+    quizDescEl.style.display = 'none';
+
+    quizDescEl.textContent = '';
+
     status('+'+JUMP_PTS+' ქულა! Dragon ხტება! 🌸');
 
     quizCard.classList.add('hidden'); isQuizActive=false;
@@ -1539,75 +1644,89 @@ function answer(idx){
 
     updateLives();
 
+    quizDescEl.textContent = currentQuestion.desc || '';
+
+    quizDescEl.style.display = currentQuestion.desc ? 'block' : 'none';
+
     // Flicker effect
 
     gameArea.classList.add('flicker');
 
     setTimeout(() => gameArea.classList.remove('flicker'), 500);
 
-    if(lives <= 0){
+    setTimeout(() => {
 
-      gameOver('არასწორი — კაქტუსმა გიჭირა! 💔');
+      quizDescEl.style.display = 'none';
 
-    } else {
+      quizDescEl.textContent = '';
 
-      status('არასწორი! -1 სიცოცხლე (' + lives + ' დარჩა) 💔');
+      if(lives <= 0){
 
-      // Smooth collision animation for damage
+        quizCard.classList.add('hidden'); isQuizActive=false;
 
-      const targetCactusX = DLEFT + DWIDTH - 8;
+        gameOver('არასწორი — კაქტუსმა გიჭირა! 💔');
 
-      const startCactusX = cactusX;
+      } else {
 
-      const startTime = performance.now();
+        status('არასწორი! -1 სიცოცხლე (' + lives + ' დარჩა) 💔');
 
-      const duration = 300;
+        // Smooth collision animation for damage
 
-      dragon.classList.remove('running','jumping');
+        const targetCactusX = DLEFT + DWIDTH - 8;
 
-      function animate(now){
+        const startCactusX = cactusX;
 
-        const t = Math.min((now - startTime) / duration, 1);
+        const startTime = performance.now();
 
-        const easeT = t * t * (3 - 2 * t);
+        const duration = 300;
 
-        cactusX = startCactusX + (targetCactusX - startCactusX) * easeT;
+        dragon.classList.remove('running','jumping');
 
-        cactusEl.style.left = cactusX + 'px';
+        function animate(now){
 
-        if(t < 1){
+          const t = Math.min((now - startTime) / duration, 1);
 
-          requestAnimationFrame(animate);
+          const easeT = t * t * (3 - 2 * t);
 
-        } else {
+          cactusX = startCactusX + (targetCactusX - startCactusX) * easeT;
 
-          dragon.classList.add('crash', 'hit');
+          cactusEl.style.left = cactusX + 'px';
 
-          setTimeout(() => {
+          if(t < 1){
 
-            if(!isGameOver){
+            requestAnimationFrame(animate);
 
-              dragon.classList.remove('crash', 'hit');
+          } else {
 
-              dragon.classList.add('running');
+            dragon.classList.add('crash', 'hit');
 
-              resetCactus();
+            setTimeout(() => {
 
-              status('გაიქეცი! 🌸');
+              if(!isGameOver){
 
-            }
+                dragon.classList.remove('crash', 'hit');
 
-          }, 1500);
+                dragon.classList.add('running');
+
+                resetCactus();
+
+                status('გაიქეცი! 🌸');
+
+              }
+
+            }, 1500);
+
+          }
 
         }
 
+        requestAnimationFrame(animate);
+
+        quizCard.classList.add('hidden'); isQuizActive=false;
+
       }
 
-      requestAnimationFrame(animate);
-
-      quizCard.classList.add('hidden'); isQuizActive=false;
-
-    }
+    }, 2000);
 
   }
 
@@ -1696,6 +1815,10 @@ function resetGame(){
   }
 
   dragon.classList.remove('crash','jumping', 'hit'); dragon.style.bottom=GBOT+'px'; dragon.classList.add('running');
+
+  quizDescEl.style.display = 'none';
+
+  quizDescEl.textContent = '';
 
   gameOverEl.classList.add('hidden'); quizCard.classList.add('hidden'); quizCard.style.opacity = '1'; resetCactus();
 
