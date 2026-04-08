@@ -1205,7 +1205,12 @@ bgMusic.volume = 0.05; // Very low, gentle volume
 
 
 
-const DLEFT=80, DWIDTH=60, CW=42, SPEED=7, QDIST=150, GBOT=40, JH=158, JDUR=950;
+const DLEFT=80, DWIDTH=60, CW=42, SPEED=420, QDIST=150, GBOT=40, JH=158, JDUR=950;
+const BASE_GAME_WIDTH = 920;
+const BASE_GAME_HEIGHT = 265;
+const TARGET_FRAME_MS = 1000/60;
+const MAX_DT_MS = 50;
+let lastFrameTime = null;
 
 
 
@@ -1694,6 +1699,21 @@ function resetCactus(){
 
 }
 
+function getWorldScale(){
+
+  const areaW = gameArea.clientWidth || BASE_GAME_WIDTH;
+
+  const areaH = gameArea.clientHeight || BASE_GAME_HEIGHT;
+
+  const widthScale = areaW / BASE_GAME_WIDTH;
+
+  const heightScale = areaH / BASE_GAME_HEIGHT;
+
+  // Clamp scale to keep gameplay readable across very small/large screens.
+  return Math.min(1.15, Math.max(0.85, (widthScale + heightScale) / 2));
+
+}
+
 
 
 // ── JUMP ──
@@ -1707,14 +1727,17 @@ function jump(){
   dragon.classList.remove('running','crash'); dragon.classList.add('jumping'); dragon.style.zIndex='30';
 
   const t0=performance.now();
+  const jumpHeight = JH * getWorldScale();
 
   (function step(now){
 
     if(isGameOver){dragon.style.bottom=GBOT+'px';dragon.style.zIndex='20';return;}
 
-    const t=Math.min((now-t0)/JDUR,1);
+    const elapsed = now - t0;
+    const t = Math.min(elapsed / JDUR, 1);
 
-    dragon.style.bottom=(GBOT+Math.sin(Math.PI*t)*JH)+'px';
+    // Normalized curve tied only to JDUR so it is monitor refresh independent.
+    dragon.style.bottom=(GBOT+Math.sin(Math.PI*t)*jumpHeight)+'px';
 
     t<1?requestAnimationFrame(step):(
 
@@ -1769,7 +1792,8 @@ function shouldTriggerQuiz(){
 
   // Previous frame: cactus beyond zone, current frame: cactus entering zone
 
-  if(prevCactusX > triggerZoneEnd && cactusX <= triggerZoneEnd && cactusX > triggerZoneStart){
+  // Trigger when crossing into or fully skipping across the quiz zone in one frame.
+  if(prevCactusX > triggerZoneEnd && cactusX <= triggerZoneEnd && cactusX + CW >= triggerZoneStart){
 
     hasTriggeredThisPass = true;
 
@@ -2148,6 +2172,22 @@ function checkCol(){
 
 function loop(){
 
+  const now = performance.now();
+
+  if(lastFrameTime === null){
+
+    lastFrameTime = now;
+
+  }
+
+  const rawDt = now - lastFrameTime;
+
+  const dtMs = Math.min(rawDt, MAX_DT_MS);
+
+  const dtNorm = dtMs / TARGET_FRAME_MS;
+
+  lastFrameTime = now;
+
   if(running&&!isGameOver){
 
     // State Management: Pause the game world (cactus and background movement) when a quiz question is active.
@@ -2158,21 +2198,29 @@ function loop(){
 
     if(!isQuizActive && !isApproaching){
 
-      groundOff=(groundOff-SPEED)%64;
+      prevCactusX = cactusX;
+
+      const worldScale = getWorldScale();
+
+      const speedPx = SPEED * worldScale;
+
+      const moveStep = speedPx * (dtMs / 1000);
+
+      groundOff=(groundOff-(7*worldScale*dtNorm))%64;
 
       groundEl.style.backgroundPositionX=groundOff+'px';
 
-      cactusX-=SPEED;
+      cactusX-=moveStep;
 
       cactusEl.style.left=cactusX+'px';
+
+      if(!isJumping&&shouldTriggerQuiz()) triggerQuiz();
 
     }
 
     checkCol();
 
     if(cactusX+CW<0) resetCactus();
-
-    if(!isQuizActive&&!isJumping&&cactusX>DLEFT+DWIDTH&&cactusX<=DLEFT+DWIDTH+QDIST) triggerQuiz();
 
   }
 
