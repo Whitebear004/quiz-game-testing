@@ -1081,12 +1081,6 @@ const QS = [
     desc: "<span> არის ინლაინ ელემენტი, რომელიც გამოიყენება ტექსტის კონკრეტული ნაწილის გამოსაყოფად სტილის მისანიჭებლად."
   },
   {
-    q: "რომელი ატრიბუტით ვუთითებთ ელემენტზე დამატებით ინფორმაციას, რომელიც 'Mouse Hover'-ისას ჩნდება?",
-    a: ["alt", "name", "title", "info"],
-    c: 2,
-    desc: "title ატრიბუტი ქმნის მცირე ტექსტურ მინიშნებას (tooltip), რომელიც ჩნდება ელემენტზე მაუსის მიტანისას."
-  },
-  {
     q: "რომელი თეგი გამოიყენება ხაზგასმული (Italic) ტექსტისთვის სემანტიკური დატვირთვის გარეშე?",
     a: ["<em>", "<i>", "<b>", "<span>"],
     c: 1,
@@ -1838,7 +1832,10 @@ function answer(idx){
 
   if(idx===currentQuestion.c){
 
-    playOK(); addPts(JUMP_PTS);
+    // ── CORRECT ANSWER ──
+
+    playOK(); 
+    addPts(JUMP_PTS);
 
     quizDescEl.style.display = 'none';
 
@@ -1846,19 +1843,27 @@ function answer(idx){
 
     status('+'+JUMP_PTS+' ქულა! Dragon ხტება! 🌸');
 
-    quizCard.classList.add('hidden'); isQuizActive=false;
+    quizCard.classList.add('hidden'); 
+    isQuizActive=false;
 
-    cactusX=DLEFT+DWIDTH+80; cactusEl.style.left=cactusX+'px';
+    cactusX=DLEFT+DWIDTH+80; 
+    cactusEl.style.left=cactusX+'px';
 
     jump();
 
   } else {
+
+    // ── INCORRECT ANSWER ──
 
     playBad();
 
     lives--;
 
     updateLives();
+
+    // Deduct 1 point (but never go below 0)
+    score = Math.max(0, score - 1);
+    updateBoard([score]);
 
     quizDescEl.textContent = currentQuestion.desc || '';
 
@@ -1870,6 +1875,8 @@ function answer(idx){
 
     setTimeout(() => gameArea.classList.remove('flicker'), 500);
 
+    // Show description for 3 seconds, then proceed with collision feedback
+
     setTimeout(() => {
 
       quizDescEl.style.display = 'none';
@@ -1878,7 +1885,8 @@ function answer(idx){
 
       if(lives <= 0){
 
-        quizCard.classList.add('hidden'); isQuizActive=false;
+        quizCard.classList.add('hidden'); 
+        isQuizActive=false;
 
         gameOver('არასწორი — კაქტუსმა გიჭირა! 💔');
 
@@ -1916,6 +1924,8 @@ function answer(idx){
 
             dragon.classList.add('crash', 'hit');
 
+            // Remove crash/hit animation after brief delay and resume gameplay
+
             setTimeout(() => {
 
               if(!isGameOver){
@@ -1928,9 +1938,12 @@ function answer(idx){
 
                 status('გაიქეცი! 🌸');
 
+                quizCard.classList.add('hidden'); 
+                isQuizActive=false;
+
               }
 
-            }, 10000);
+            }, 800);
 
           }
 
@@ -1938,11 +1951,9 @@ function answer(idx){
 
         requestAnimationFrame(animate);
 
-        quizCard.classList.add('hidden'); isQuizActive=false;
-
       }
 
-    }, 5000);
+    }, 3000);
 
   }
 
