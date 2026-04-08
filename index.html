@@ -122,7 +122,11 @@ body::before{
 
   text-transform:uppercase;}
 
-.story-text-wrap{min-height:180px;display:grid;place-items:center;margin-bottom:1.4rem;}
+.story-text-wrap{min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;margin-bottom:1.4rem;}
+
+#story-image{width:100%;height:230px;border-radius:20px;background-size:contain;background-repeat:no-repeat;
+
+  background-position:center;background-image:radial-gradient(circle at center, rgba(255,255,255,.06), rgba(255,255,255,0));}
 
 .story-text{max-width:30ch;color:#f8f4ff;font-size:clamp(1.35rem,2.8vw,2.2rem);line-height:1.55;font-weight:700;
 
@@ -472,6 +476,12 @@ body::before{
 
   }
 
+  #story-image {
+
+    height: 200px;
+
+  }
+
   .story-actions {
 
     flex-direction: column;
@@ -599,6 +609,8 @@ body::before{
     <p class="story-kicker">Moonlit Prologue</p>
 
     <div class="story-text-wrap">
+
+      <div id="story-image" aria-hidden="true"></div>
 
       <p id="story-text" class="story-text story-text-enter" aria-live="polite"></p>
 
@@ -1144,6 +1156,8 @@ const winScreen = document.getElementById('winner-screen');
 
 const storyOverlay = document.getElementById('story-overlay');
 
+const storyImageEl = document.getElementById('story-image');
+
 const storyTextEl = document.getElementById('story-text');
 
 const storyNextBtn = document.getElementById('story-next');
@@ -1155,11 +1169,26 @@ const lobbyEl = document.getElementById('lobby');
 
 
 const STORY_LINES = [
-  'თქვენი მიზანია დრაკონთან ერთად გადალახოთ დაბრკოლებები',
-  'ყოველი სწორი პასუხი = წარმატებული ნახტომს 🐉✨ სულ 25 კითხვაა',
-  'არასწორი პასუხის შემთხვევაში იხილავთ მოკლე განმარტებას, რაც დაგეხმარებათ მასალის უკეთ გაგებაში',
-  'გაქვთ 2 შეცდომის დაშვების უფლება. მესამე შეცდომაზე თამაში სრულდება და მოგიწევთ თავიდან დაწყება. 💔',
-  '🏆 თამაშის დასრულებისას გამოჩნდება ფორმა. შეგეძლებათ ჩაწეროთ, რა მოგეწონათ ან რას შეცვლიდით.'
+  {
+    text: 'თქვენი მიზანია დრაკონთან ერთად გადალახოთ დაბრკოლებები',
+    img: 'assets/storyline/1.png'
+  },
+  {
+    text: 'ყოველი სწორი პასუხი = წარმატებული ნახტომს 🐉✨ სულ 25 კითხვაა',
+    img: 'assets/storyline/2.png'
+  },
+  {
+    text: 'არასწორი პასუხის შემთხვევაში იხილავთ მოკლე განმარტებას, რაც დაგეხმარებათ მასალის უკეთ გაგებაში',
+    img: 'assets/storyline/3.png'
+  },
+  {
+    text: 'გაქვთ 2 შეცდომის დაშვების უფლება. მესამე შეცდომაზე თამაში სრულდება და მოგიწევთ თავიდან დაწყება. 💔',
+    img: 'assets/storyline/4.png'
+  },
+  {
+    text: '🏆 თამაშის დასრულებისას გამოჩნდება ფორმა. შეგეძლებათ ჩაწეროთ, რა მოგეწონათ ან რას შეცვლიდით.',
+    img: 'assets/storyline/5.png'
+  }
 ];
 
 let storyIndex = 0;
@@ -1168,9 +1197,13 @@ let storyIndex = 0;
 
 function renderStoryLine(){
 
+  const storyPart = STORY_LINES[storyIndex];
+
   storyTextEl.classList.remove('story-text-enter');
 
-  storyTextEl.textContent = STORY_LINES[storyIndex];
+  storyTextEl.textContent = storyPart.text;
+
+  storyImageEl.style.backgroundImage = 'url("' + storyPart.img + '")';
 
   void storyTextEl.offsetWidth;
 
