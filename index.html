@@ -102,9 +102,51 @@ body::before{
 
 
 
+/* STORY OVERLAY */
+
+#story-overlay{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;
+
+  padding:1.5rem;background:rgba(2, 7, 28, .74);backdrop-filter:blur(16px);}
+
+#story-overlay.hidden{display:none;}
+
+.story-panel{width:min(680px,100%);padding:2rem 2rem 1.5rem;border-radius:28px;text-align:center;
+
+  background:linear-gradient(180deg,rgba(16, 27, 73, .92) 0%,rgba(33, 18, 68, .88) 100%);
+
+  border:1px solid rgba(207, 226, 255, .22);box-shadow:0 24px 60px rgba(0,0,0,.45), inset 0 0 40px rgba(255,255,255,.05);}
+
+.story-kicker{display:inline-block;margin-bottom:.9rem;padding:.35rem .8rem;border-radius:999px;
+
+  background:rgba(255,255,255,.08);color:#ffe9fb;font-size:.82rem;font-weight:800;letter-spacing:.18em;
+
+  text-transform:uppercase;}
+
+.story-text-wrap{min-height:180px;display:grid;place-items:center;margin-bottom:1.4rem;}
+
+.story-text{max-width:30ch;color:#f8f4ff;font-size:clamp(1.35rem,2.8vw,2.2rem);line-height:1.55;font-weight:700;
+
+  text-shadow:0 0 28px rgba(178, 222, 255, .18),0 0 14px rgba(255, 187, 233, .18);opacity:0;transform:translateY(18px) scale(.98);}
+
+.story-text.story-text-enter{animation:story-fade .65s ease forwards;}
+
+@keyframes story-fade{from{opacity:0;transform:translateY(22px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+.story-actions{display:flex;justify-content:center;gap:.85rem;flex-wrap:wrap;}
+
+.btn-ghost{font-family:'Nunito',sans-serif;background:rgba(255,255,255,.08);color:#f6dcff;border:1px solid rgba(255,255,255,.22);
+
+  border-radius:14px;padding:.8rem 1.5rem;font-size:1rem;font-weight:800;cursor:pointer;backdrop-filter:blur(8px);
+
+  transition:transform .18s,background .18s,border-color .18s;}
+
+.btn-ghost:hover{transform:translateY(-2px);background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.34);}
+
+
+
 /* LOBBY */
 
-#lobby{background:var(--panel);border:1px solid var(--panel-border);border-radius:20px;
+#lobby{display:none;background:var(--panel);border:1px solid var(--panel-border);border-radius:20px;
 
   padding:2rem;text-align:center;box-shadow:0 16px 32px var(--shadow);backdrop-filter:blur(15px);}
 
@@ -410,6 +452,38 @@ body::before{
 
 @media (max-width: 768px) {
 
+  #story-overlay {
+
+    padding: 1rem;
+
+  }
+
+  .story-panel {
+
+    padding: 1.5rem 1rem 1.2rem;
+
+    border-radius: 22px;
+
+  }
+
+  .story-text-wrap {
+
+    min-height: 150px;
+
+  }
+
+  .story-actions {
+
+    flex-direction: column;
+
+  }
+
+  .story-actions button {
+
+    width: 100%;
+
+  }
+
   body {
 
     /* Prevent double tap zoom on iOS */
@@ -517,6 +591,30 @@ body::before{
 </head>
 
 <body>
+
+<div id="story-overlay">
+
+  <div class="story-panel">
+
+    <p class="story-kicker">Moonlit Prologue</p>
+
+    <div class="story-text-wrap">
+
+      <p id="story-text" class="story-text story-text-enter" aria-live="polite"></p>
+
+    </div>
+
+    <div class="story-actions">
+
+      <button id="story-next" class="btn-primary" type="button">Next</button>
+
+      <button id="story-skip" class="btn-ghost" type="button">Skip to Lobby</button>
+
+    </div>
+
+  </div>
+
+</div>
 
 <main class="app">
 
@@ -1044,6 +1142,80 @@ const gameOverEl= document.getElementById('gameOverScreen');
 
 const winScreen = document.getElementById('winner-screen');
 
+const storyOverlay = document.getElementById('story-overlay');
+
+const storyTextEl = document.getElementById('story-text');
+
+const storyNextBtn = document.getElementById('story-next');
+
+const storySkipBtn = document.getElementById('story-skip');
+
+const lobbyEl = document.getElementById('lobby');
+
+
+
+const STORY_LINES = [
+  'თქვენი მიზანია დრაკონთან ერთად გადალახოთ დაბრკოლებები',
+  'ყოველი სწორი პასუხი = წარმატებული ნახტომს 🐉✨ სულ 25 კითხვაა',
+  'არასწორი პასუხის შემთხვევაში იხილავთ მოკლე განმარტებას, რაც დაგეხმარებათ მასალის უკეთ გაგებაში',
+  'გაქვთ 2 შეცდომის დაშვების უფლება. მესამე შეცდომაზე თამაში სრულდება და მოგიწევთ თავიდან დაწყება. 💔',
+  '🏆 თამაშის დასრულებისას გამოჩნდება ფორმა. შეგეძლებათ ჩაწეროთ, რა მოგეწონათ ან რას შეცვლიდით.'
+];
+
+let storyIndex = 0;
+
+
+
+function renderStoryLine(){
+
+  storyTextEl.classList.remove('story-text-enter');
+
+  storyTextEl.textContent = STORY_LINES[storyIndex];
+
+  void storyTextEl.offsetWidth;
+
+  storyTextEl.classList.add('story-text-enter');
+
+  storyNextBtn.textContent = storyIndex === STORY_LINES.length - 1 ? 'Enter Lobby' : 'Next';
+
+}
+
+
+
+function finishStory(){
+
+  storyOverlay.classList.add('hidden');
+
+  lobbyEl.style.display = 'block';
+
+}
+
+
+
+function handleStoryNext(){
+
+  if(storyIndex >= STORY_LINES.length - 1){
+
+    finishStory();
+
+    return;
+
+  }
+
+  storyIndex += 1;
+
+  renderStoryLine();
+
+}
+
+
+
+storyNextBtn.addEventListener('click', handleStoryNext);
+
+storySkipBtn.addEventListener('click', finishStory);
+
+renderStoryLine();
+
 
 
 // ── LOBBY ──
@@ -1124,7 +1296,7 @@ function startLobby(){
 
 function launchGame(){
 
-  document.getElementById('lobby').style.display='none';
+  lobbyEl.style.display='none';
 
   document.getElementById('game-wrapper').style.display='flex';
 
